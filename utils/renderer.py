@@ -88,8 +88,8 @@ class Renderer:
         :param fps: frame rate of output video
         :param batch_size: number of frames to render simultaneously in one batch
         """
-        if not video_output[-4:] == '.mp4':
-            video_output = video_output + '.mp4'
+        if not video_output.endswith('.mp4'):
+            video_output += '.mp4'
 
         images = th.cat([self.render(v).cpu() for v in th.split(verts, batch_size)], dim=0)
         images = 255 * images[:, :, :, :3].contiguous().numpy()

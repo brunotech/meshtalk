@@ -156,10 +156,7 @@ class ContextModel(Net):
         """
         :return: receptive field of the model
         """
-        receptive_field = 1
-        for layer in self.context_layers:
-            receptive_field += layer.receptive_field() - 1
-        return receptive_field
+        return 1 + sum(layer.receptive_field() - 1 for layer in self.context_layers)
 
     def _reset(self):
         """

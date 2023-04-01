@@ -6,6 +6,7 @@ This source code is licensed under the license found in the
 LICENSE file in the root directory of this source tree.
 """
 
+
 import argparse
 import numpy as np
 
@@ -21,15 +22,15 @@ parser.add_argument("--template_topology", type=str, default="assets/face_templa
 args = parser.parse_args()
 
 # load input .bin file from multiface
-if not args.multiface_geometry[-4:] == ".bin":
+if args.multiface_geometry[-4:] != ".bin":
     raise Exception("Multiface geometry must be a .bin file")
 geom = np.fromfile(args.multiface_geometry, dtype=np.float32).reshape(-1, 3)
-valid_verts = [i for i in range(7306) if not i in ignore_vertices]
+valid_verts = [i for i in range(7306) if i not in ignore_vertices]
 geom = geom[valid_verts, :]
 geom = [f"v {v[0]:.7e} {v[1]:.7e} {v[2]:.7e}" for v in geom]
 
 # load meshtalk template topology
-if not args.template_topology[-4:] == ".obj":
+if args.template_topology[-4:] != ".obj":
     raise Exception("Meshtalk template topology must be a .obj file")
 with open(args.template_topology, "r") as f:
     topology = f.readlines()
@@ -39,7 +40,7 @@ f.close()
 topology = geom + topology[len(geom):]
 
 # save result to .obj file
-if not args.meshtalk_geometry[-4:] == ".obj":
+if args.meshtalk_geometry[-4:] != ".obj":
     raise Exception("Output file must be a .obj file")
 with open(args.meshtalk_geometry, "w") as f:
     topology = [f"{line}\n" for line in topology]

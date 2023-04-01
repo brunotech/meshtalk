@@ -26,7 +26,7 @@ def load_audio(wave_file: str):
     :return: 1 x T tensor containing input audio resampled to 16kHz
     """
     audio, sr = ta.load(wave_file)
-    if not sr == 16000:
+    if sr != 16000:
         audio = ta.transforms.Resample(sr, 16000)(audio)
     if audio.shape[0] > 1:
         audio = th.mean(audio, dim=0, keepdim=True)
@@ -103,10 +103,11 @@ class Net(th.nn.Module):
         :param suffix: option suffix to append to the network name
         """
         self.cpu()
-        if suffix == "":
-            fname = f"{model_dir}/{self.model_name}.pkl"
-        else:
-            fname = f"{model_dir}/{self.model_name}.{suffix}.pkl"
+        fname = (
+            f"{model_dir}/{self.model_name}.{suffix}.pkl"
+            if suffix
+            else f"{model_dir}/{self.model_name}.pkl"
+        )
         th.save(self.state_dict(), fname)
         self.cuda()
         return self
@@ -117,10 +118,11 @@ class Net(th.nn.Module):
         :param suffix: optional suffix to append to the network name
         """
         self.cpu()
-        if suffix == "":
-            fname = f"{model_dir}/{self.model_name}.pkl"
-        else:
-            fname = f"{model_dir}/{self.model_name}.{suffix}.pkl"
+        fname = (
+            f"{model_dir}/{self.model_name}.{suffix}.pkl"
+            if suffix
+            else f"{model_dir}/{self.model_name}.pkl"
+        )
         states = th.load(fname)
         self.load_state_dict(states)
         self.cuda()

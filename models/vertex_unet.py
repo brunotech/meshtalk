@@ -60,7 +60,7 @@ class VertexUnet(Net):
                  skips: outputs after each of the UNet encoder layers
         """
         skips = []
-        for i, layer in enumerate(self.encoder):
+        for layer in self.encoder:
             skips = [x] + skips
             x = F.leaky_relu(layer(x), 0.2)
         return x, skips
