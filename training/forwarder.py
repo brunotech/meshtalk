@@ -69,10 +69,10 @@ class DiscreteExpressionForwarder:
     def _reconstruct(self, template_geom, expression_code, audio_code):
         logprobs = self.encoder.fuse(expression_code, audio_code)["logprobs"]
         z = quantize(logprobs)["one_hot"]
-        recon = self.geom_unet(
-            template_geom.unsqueeze(1).expand(-1, z.shape[1], -1, -1).contiguous(), z
+        return self.geom_unet(
+            template_geom.unsqueeze(1).expand(-1, z.shape[1], -1, -1).contiguous(),
+            z,
         )["geom"]
-        return recon
 
     def forward(self, data):
         template = data["template"].cuda()
@@ -87,12 +87,12 @@ class DiscreteExpressionForwarder:
         # compute losses
         if "recon" in self.config["train"]["loss_terms"]:
             l2_loss = th.mean((recon - geom) ** 2)
-            loss_dict.update({"recon": l2_loss})
+            loss_dict["recon"] = l2_loss
 
         if "landmarks" in self.config["train"]["loss_terms"]:
             lmk_loss = th.sum(((recon - geom) ** 2) * self.landmarks[None, None, :, None]) / \
-                       (B * T * th.sum(self.landmarks) * 3)
-            loss_dict.update({"landmarks": lmk_loss})
+                           (B * T * th.sum(self.landmarks) * 3)
+            loss_dict["landmarks"] = lmk_loss
 
         if "modality_crossing" in self.config["train"]["loss_terms"]:
             # keep audio, switch expression
@@ -101,16 +101,18 @@ class DiscreteExpressionForwarder:
                                             enc["audio_code"]
                                             )
             audio_consistency_loss = th.sum(((cross_recon - geom) ** 2) * self.mouth_mask[None, None, :, None]) / \
-                                     (B * T * th.sum(self.mouth_mask) * 3)
+                                         (B * T * th.sum(self.mouth_mask) * 3)
             # keep expression, switch audio
             cross_recon = self._reconstruct(template,
                                             enc["expression_code"],
                                             enc["audio_code"][self.random_shift(B), :, :]
                                             )
             expression_consistency_loss = th.sum(((cross_recon - geom) ** 2) * self.eye_mask[None, None, :, None]) / \
-                                          (B * T * th.sum(self.eye_mask) * 3)
+                                              (B * T * th.sum(self.eye_mask) * 3)
             # add modality crossing loss to loss_dict
-            loss_dict.update({"modality_crossing": audio_consistency_loss + expression_consistency_loss})
+            loss_dict["modality_crossing"] = (
+                audio_consistency_loss + expression_consistency_loss
+            )
 
         return loss_dict
 
@@ -150,6 +152,6 @@ class CategoricalAutoregressiveForwarder:
 
         if "cross_entropy" in self.config["train"]["loss_terms"]:
             ce_loss = th.nn.functional.nll_loss(logprobs.view(-1, logprobs.shape[-1]), target_labels.view(-1))
-            loss_dict.update({"cross_entropy": ce_loss})
+            loss_dict["cross_entropy"] = ce_loss
 
         return loss_dict

@@ -15,8 +15,7 @@ from torch.utils.data import DataLoader
 
 def cycle(dataloader):
     while True:
-        for data in dataloader:
-            yield data
+        yield from dataloader
 
 
 class Trainer:
@@ -103,6 +102,6 @@ class Trainer:
         val_dataloader = cycle(val_dataloader)
         data = next(val_dataloader)
         loss_dict = self.forwarder.forward(data)
-        loss_dict = {k + "_val": v for k, v in loss_dict.items()}
+        loss_dict = {f"{k}_val": v for k, v in loss_dict.items()}
 
         return loss_dict
